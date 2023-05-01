@@ -31,15 +31,20 @@ const DUMMY_MEALS = [
 ];
 export default function AvailableMeals() {
   const [meals, setMeals] = useState([]); 
+  const [httpError, setHttpError] = useState();
+  const [isLoading, setIsLoading] = useState(true);
   useEffect(()=>{
     const fetchResp = async()=>{
      const response = await fetch('https://meal-http-95e35-default-rtdb.firebaseio.com/meal.json');
+     if (!response.ok) {
+      throw new Error('Something went wrong!');
+    }
      const responseData = await response.json();
 
-     const losdMeals = [];
+     const loadedMeals = [];
 
      for(const key in responseData){
-       losdMeals.push({
+      loadedMeals.push({
         id: key,
         name: responseData[key].name,
         description: responseData[key].description,
@@ -47,11 +52,30 @@ export default function AvailableMeals() {
 
        })
      }
-
-     setMeals(losdMeals);
+     setMeals(loadedMeals);
+     setIsLoading(false);
   }
-  fetchResp();
+  fetchResp().catch((error) => {
+    setIsLoading(false);
+    setHttpError(error.message);
+  });
 },[])
+if (isLoading) {
+  return (
+    <section className={classes.MealsLoading}>
+      <p>Loading...</p>
+    </section>
+  );
+}
+
+if (httpError) {
+  return (
+    <section className={classes.MealsError}>
+      <p>{httpError}</p>
+    </section>
+  );
+}
+
   const mealsList = meals.map((meals) => (
     <MealItem
       id={meals.id} // this is new!
